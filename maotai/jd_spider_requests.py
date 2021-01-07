@@ -175,10 +175,10 @@ class QrLogin:
         if not response_status(resp):
             logger.info('获取二维码失败')
             return False
-
         save_image(resp, self.qrcode_img_file)
         logger.info('二维码获取成功，请打开京东APP扫描')
         open_image(self.qrcode_img_file)
+        
         return True
 
     def _get_qrcode_ticket(self):
@@ -330,7 +330,7 @@ class JdSeckill(object):
         self._seckill()
 
     @check_login
-    def seckill_by_proc_pool(self, work_count=5):
+    def seckill_by_proc_pool(self, work_count=8):
         """
         多进程进行抢购
         work_count：进程数量
@@ -357,8 +357,10 @@ class JdSeckill(object):
         """
         while True:
             try:
+                logger.info('--------------------开始抢购---------------------')
                 self.request_seckill_url()
                 while True:
+                    logger.info('进入订单页面')
                     self.request_seckill_checkout_page()
                     self.submit_seckill_order()
             except Exception as e:
@@ -381,7 +383,7 @@ class JdSeckill(object):
         resp = self.session.get(url=url, params=payload, headers=headers)
         resp_json = parse_json(resp.text)
         reserve_url = resp_json.get('url')
-        self.timers.start()
+        # self.timers.start()
         while True:
             try:
                 self.session.get(url='https:' + reserve_url)
@@ -465,9 +467,10 @@ class JdSeckill(object):
         """访问商品的抢购链接（用于设置cookie等"""
         logger.info('用户:{}'.format(self.get_username()))
         logger.info('商品名称:{}'.format(self.get_sku_title()))
+        logger.info('---------------等待抢购中---------------')
         self.timers.start()
+        logger.info('---------------开始抢购---------------')
         self.seckill_url[self.sku_id] = self.get_seckill_url()
-        logger.info('访问商品的抢购连接...')
         headers = {
             'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',

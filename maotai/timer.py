@@ -81,4 +81,5 @@ class Timer(object):
                 logger.info('时间到达，开始执行……')
                 break
             else:
+                logger.info('时间未到达，检测中')
                 time.sleep(self.sleep_interval)

@@ -151,3 +151,10 @@ windows目前已经打包完毕，请下载`jd_maotai_20210102.zip`文件，解�
 ## 感谢
 ##### 非常感谢原作者 https://github.com/zhou-xiaojun/jd_mask 提供的代码
 ##### 也非常感谢 https://github.com/wlwwu/jd_maotai 进行的优化
+
+
+
+docker:
+
+
+docker run -v /Users/omelette/Documents/github/jd_maotai_seckill:/data
