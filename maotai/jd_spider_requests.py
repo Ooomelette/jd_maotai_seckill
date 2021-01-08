@@ -284,6 +284,8 @@ class JdSeckill(object):
         self.user_agent = self.spider_session.user_agent
         self.nick_name = None
 
+        self.nosuccess = True
+
     def login_by_qrcode(self):
         """
         二维码登陆
@@ -330,7 +332,7 @@ class JdSeckill(object):
         self._seckill()
 
     @check_login
-    def seckill_by_proc_pool(self, work_count=8):
+    def seckill_by_proc_pool(self, work_count=7):
         """
         多进程进行抢购
         work_count：进程数量
@@ -359,7 +361,7 @@ class JdSeckill(object):
             try:
                 logger.info('--------------------开始抢购---------------------')
                 self.request_seckill_url()
-                while True:
+                while (self.timers.in_skill_time() and self.nosuccess):
                     logger.info('进入订单页面')
                     self.request_seckill_checkout_page()
                     self.submit_seckill_order()
@@ -383,7 +385,7 @@ class JdSeckill(object):
         resp = self.session.get(url=url, params=payload, headers=headers)
         resp_json = parse_json(resp.text)
         reserve_url = resp_json.get('url')
-        # self.timers.start()
+
         while True:
             try:
                 self.session.get(url='https:' + reserve_url)
@@ -469,7 +471,7 @@ class JdSeckill(object):
         logger.info('商品名称:{}'.format(self.get_sku_title()))
         logger.info('---------------等待抢购中---------------')
         self.timers.start()
-        logger.info('---------------开始抢购---------------')
+        logger.info('---------------抢购时间以到，开始抢购---------------')
         self.seckill_url[self.sku_id] = self.get_seckill_url()
         headers = {
             'User-Agent': self.user_agent,
@@ -613,6 +615,7 @@ class JdSeckill(object):
         # 抢购成功：
         # {"appUrl":"xxxxx","orderId":820227xxxxx,"pcUrl":"xxxxx","resultCode":0,"skuId":0,"success":true,"totalMoney":"xxxxx"}
         if resp_json.get('success'):
+            self.nosuccess = False
             order_id = resp_json.get('orderId')
             total_money = resp_json.get('totalMoney')
             pay_url = 'https:' + resp_json.get('pcUrl')
@@ -621,9 +624,10 @@ class JdSeckill(object):
                 success_message = "抢购成功，订单号:{}, 总价:{}, 电脑端付款链接:{}".format(order_id, total_money, pay_url)
                 send_wechat(success_message)
             return True
+            
         else:
             logger.info('抢购失败，返回信息:{}'.format(resp_json))
-            if global_config.getRaw('messenger', 'enable') == 'true':
-                error_message = '抢购失败，返回信息:{}'.format(resp_json)
-                send_wechat(error_message)
+            # if global_config.getRaw('messenger', 'enable') == 'true':
+            #     error_message = '抢购失败，返回信息:{}'.format(resp_json)
+            #     send_wechat(error_message)
             return False
